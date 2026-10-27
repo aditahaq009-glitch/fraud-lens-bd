@@ -1,0 +1,25 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Next.js / Node.js
+node_modules/
+.next/
+out/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# IDE and system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Uploaded evidence
+uploads/
