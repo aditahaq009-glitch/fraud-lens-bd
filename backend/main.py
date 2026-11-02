@@ -1,10 +1,12 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime, timezone
 from uuid import uuid4
+
+# 1. Import your search router here at the top
+from search import router as search_router
 
 
 app = FastAPI(title="Fraud Lens BD API")
@@ -17,6 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 2. Include your search router right after setting up middleware
+app.include_router(search_router)
 
 
 # Temporary development storage
