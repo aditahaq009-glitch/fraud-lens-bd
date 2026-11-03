@@ -6,19 +6,27 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
 
     setLoading(true);
+    setError(null);
+
     try {
       const res = await fetch(`http://127.0.0.1:8000/search?q=${encodeURIComponent(query)}`);
+      
+      if (!res.ok) {
+        throw new Error(`Server returned status: ${res.status}`);
+      }
+
       const data = await res.json();
-      // Ensure results is always an array
       setResults(Array.isArray(data.results) ? data.results : []);
-    } catch (error) {
-      console.error("Failed to fetch search results:", error);
+    } catch (err) {
+      console.error("Search error:", err);
+      setError("Unable to reach the search server. Please try again later.");
       setResults([]);
     } finally {
       setLoading(false);
@@ -49,8 +57,16 @@ export default function SearchPage() {
           </button>
         </form>
 
+        {/* Display Error State if connection/server fails */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Display Search Results */}
         <div className="space-y-4">
-          {results.length > 0 ? (
+          {!error && results.length > 0 && (
             results.map((item) => (
               <div key={item.id} className="p-5 bg-white border border-gray-200 rounded-lg shadow-sm space-y-2">
                 <div className="flex justify-between items-center">
@@ -63,8 +79,10 @@ export default function SearchPage() {
                 <p className="text-sm text-gray-700">{item.details}</p>
               </div>
             ))
-          ) : (
-            !loading && <p className="text-center text-gray-500 py-4">No records found.</p>
+          )}
+
+          {!error && !loading && results.length === 0 && query.trim() !== "" && (
+            <p className="text-center text-gray-500 py-4">No records found.</p>
           )}
         </div>
       </div>

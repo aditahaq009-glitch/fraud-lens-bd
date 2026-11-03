@@ -1,30 +1,74 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime, timezone
+from uuid import uuid4
 
-# Import existing routers along with the search router
+# 1. Import your search router at the top
 from search import router as search_router
-# Keep existing routers intact:
-# from reports import router as reports_router
-# from analysis import router as analysis_router
+
 
 app = FastAPI(title="Fraud Lens BD API")
 
-# Configure CORS Middleware for Next.js frontend (port 3000)
+# Allow communication with Next.js
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include search router
-app.include_router(search_router, prefix="", tags=["Search"])
 
-# Keep existing routers registered:
-# app.include_router(reports_router, prefix="", tags=["Reports"])
-# app.include_router(analysis_router, prefix="", tags=["Analysis"])
+# Temporary development storage
+reports = []
 
+
+# Report data validation
+class ReportCreate(BaseModel):
+    scam_type: str
+    platform: str
+    incident_date: Optional[str] = None
+    suspicious_identifier: Optional[str] = None
+    description: str
+    amount_bdt: Optional[float] = Field(default=None, ge=0)
+    evidence_files: list[str] = []
+
+
+# Health check
 @app.get("/")
-def read_root():
-    return {"message": "Fraud Lens BD API is running"}
+def home():
+    return {"message": "Fraud Lens BD Backend is running!"}
+
+
+# Create a scam report
+@app.post("/reports", status_code=201)
+def create_report(report: ReportCreate):
+
+    new_report = {
+        "id": str(uuid4()),
+        **report.model_dump(),
+        "status": "Unverified",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    reports.append(new_report)
+
+    return {
+        "message": "Report submitted successfully",
+        "report": new_report
+    }
+
+
+# Retrieve all scam reports
+@app.get("/reports")
+def get_reports():
+    return {
+        "total": len(reports),
+        "reports": reports
+    }
+
+
+# 2. Register search router
+app.include_router(search_router)
