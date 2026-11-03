@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -6,13 +5,19 @@ from typing import Optional
 from datetime import datetime, timezone
 from uuid import uuid4
 
+# Import your search router
+from search import router as search_router
+
 
 app = FastAPI(title="Fraud Lens BD API")
 
-# Allow communication with Next.js
+# Allow communication with Next.js (both localhost and 127.0.0.1)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,3 +71,7 @@ def get_reports():
         "total": len(reports),
         "reports": reports
     }
+
+
+# Register search router
+app.include_router(search_router)
