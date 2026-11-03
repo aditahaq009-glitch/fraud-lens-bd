@@ -1,29 +1,40 @@
-from fastapi import APIRouter, Query
-from typing import Optional
+from fastapi import APIRouter
+from typing import List, Dict, Any
 
 router = APIRouter()
 
-# Sample mock database of scam reports for demonstration
-MOCK_REPORTS = [
-    {"id": 1, "type": "phone", "identifier": "+8801700000000", "status": "Verified Fraud", "category": "Mobile Banking Scam"},
-    {"id": 2, "type": "wallet", "identifier": "01811111111", "status": "Disputed", "category": "Advance Payment Scam"},
-    {"id": 3, "type": "domain", "identifier": "fake-shop-bd.com", "status": "Verified Fraud", "category": "E-commerce Fraud"},
+# Mock dataset for demonstration
+MOCK_DATABASE = [
+    {
+        "id": "1",
+        "query": "01700000000",
+        "category": "Mobile Banking Scam",
+        "status": "Reported Scam (Demo)",
+        "details": "Multiple user reports claiming fake bKash PIN reset requests."
+    },
+    {
+        "id": "2",
+        "query": "fake-lottery.com",
+        "category": "Phishing Domain",
+        "status": "Flagged (Demo)",
+        "details": "Reported URL associated with SMS lottery scam links."
+    }
 ]
 
 @router.get("/search")
-def search_reports(query: Optional[str] = Query(None, description="Phone, wallet, domain, or name")):
-    if not query:
-        return {"results": [], "message": "Please provide a search query."}
+def search_registry(q: str = "") -> Dict[str, Any]:
+    query_str = q.strip().lower()
     
-    # Normalize query (lowercase) for simple matching
-    q = query.lower()
-    matched = [
-        item for item in MOCK_REPORTS 
-        if q in item["identifier"].lower() or q in item["category"].lower()
+    # Always return an array/list, even when query is empty or no matches are found
+    if not query_str:
+        return {"query": q, "results": []}
+    
+    matched_results = [
+        item for item in MOCK_DATABASE 
+        if query_str in item["query"].lower() or query_str in item["category"].lower()
     ]
     
     return {
-        "query": query,
-        "count": len(matched),
-        "results": matched if matched else "No records found matching your query (mock data)."
+        "query": q,
+        "results": matched_results  # Guaranteed to be a list []
     }

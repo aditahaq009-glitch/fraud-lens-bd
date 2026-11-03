@@ -1,73 +1,73 @@
-'use client';
-import { useState } from 'react';
+"use client";
 
-export default function SearchDashboardPage() {
-  const [query, setQuery] = useState('');
-  const [data, setData] = useState(null);
+import { useState } from "react";
+
+export default function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    if (!query.trim()) return;
 
+    setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/search?query=${encodeURIComponent(query)}`);
-      if (!response.ok) throw new Error('Failed to fetch search results.');
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err.message);
+      const res = await fetch(`http://127.0.0.1:8000/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      // Ensure results is always an array
+      setResults(Array.isArray(data.results) ? data.results : []);
+    } catch (error) {
+      console.error("Failed to fetch search results:", error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>Fraud Lens BD - Universal Search & Registry</h1>
-      <p>Search reported phone numbers, wallet numbers, domains, or scam categories.</p>
+    <div className="min-h-screen bg-gray-50 p-8 text-gray-900">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <header className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Universal Search Registry</h1>
+          <p className="text-gray-600">Search reported phone numbers, domains, or scam types.</p>
+        </header>
 
-      {/* Search Form */}
-      <form onSubmit={handleSearch} style={{ margin: '1.5rem 0', display: 'flex', gap: '0.5rem' }}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Enter phone (+880...), wallet, or domain..."
-          style={{ padding: '0.75rem', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }}
-        />
-        <button type="submit" style={{ padding: '0.75rem 1.5rem', cursor: 'pointer', background: '#0070f3', color: '#fff', border: 'none', borderRadius: '4px' }}>
-          Search
-        </button>
-      </form>
+        <form onSubmit={handleSearch} className="flex gap-3">
+          <input
+            type="text"
+            className="flex-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter phone number, domain, or category..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition"
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
+        </form>
 
-      {/* Loading & Error States */}
-      {loading && <p>Searching registry...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-
-      {/* Results Display */}
-      {data && (
-        <div style={{ marginTop: '2rem', background: '#f5f5f5', padding: '1.5rem', borderRadius: '8px' }}>
-          <h3>Results for "{data.query}" ({data.count || 0} found)</h3>
-          {Array.isArray(data.results) ? (
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-              {data.results.map((item) => (
-                <li key={item.id} style={{ background: '#fff', margin: '0.5rem 0', padding: '1rem', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                  <strong>{item.identifier}</strong> — <em>{item.category}</em>
-                  <br />
-                  <span style={{ color: item.status === 'Verified Fraud' ? 'red' : 'orange' }}>
-                    Status: {item.status}
+        <div className="space-y-4">
+          {results.length > 0 ? (
+            results.map((item) => (
+              <div key={item.id} className="p-5 bg-white border border-gray-200 rounded-lg shadow-sm space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-lg">{item.query}</span>
+                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                    {item.status}
                   </span>
-                </li>
-              ))}
-            </ul>
+                </div>
+                <p className="text-sm text-gray-500">Category: {item.category}</p>
+                <p className="text-sm text-gray-700">{item.details}</p>
+              </div>
+            ))
           ) : (
-            <p>{data.results}</p>
+            !loading && <p className="text-center text-gray-500 py-4">No records found.</p>
           )}
         </div>
-      )}
-    </main>
+      </div>
+    </div>
   );
 }
