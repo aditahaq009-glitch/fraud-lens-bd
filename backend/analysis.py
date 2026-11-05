@@ -9,6 +9,8 @@ class AnalysisRequest(BaseModel):
     text: str = Field(min_length=10, max_length=5000)
 
 
+# A job word must be present for job-fee rules to count
+JOB_WORDS = [r"\bjob\b", r"\bhiring\b", r"\bvacancy\b", r"চাকরি", r"চাকুরি", r"নিয়োগ"]
 # Each rule has: what we look for, points to add, and which scam type it points to.
 RULES = [
     {
@@ -29,11 +31,23 @@ RULES = [
         "category": "Prize or lottery scam",
         "patterns": [r"\blottery\b", r"\bwinner\b", r"\byou (have )?won\b", r"\bprize\b", r"লটারি", r"পুরস্কার"],
     },
+        {
+        "label": "Job offer asking for a fee or advance payment",
+        "points": 30,
+        "category": "Job offer scam",
+        "requires": JOB_WORDS,
+        "patterns": [
+            r"registration fee", r"advance (payment|money)", r"security deposit",
+            r"রেজিস্ট্রেশন ফি", r"অগ্রিম", r"অ্যাডভান্স", r"জামানত",
+        ],
+    },
     {
-        "label": "Job offer with a fee or easy money",
+        "label": "Job offer with unrealistic earnings",
         "points": 25,
         "category": "Job offer scam",
-        "patterns": [r"\bregistration fee\b", r"\bwork from home\b", r"\bjob offer\b", r"\bearn \d+", r"চাকরি"],
+        "patterns": [
+            r"\bearn\s*\d+", r"ঘরে বসে\s*(আয়|ইনকাম)", r"দৈনিক\s*\d+\s*টাকা",
+        ],
     },
     {
         "label": "Shortened link",
@@ -82,12 +96,16 @@ NEXT_STEPS = {
 }
 
 
-def analyze_text(text: str) -> dict:
-    matched = [
-        rule for rule in RULES
-        if any(re.search(p, text, re.IGNORECASE) for p in rule["patterns"])
-    ]
+def rule_matches(rule, text):
+    found = any(re.search(p, text, re.IGNORECASE) for p in rule["patterns"])
+    needs = rule.get("requires")
+    if found and needs:
+        found = any(re.search(p, text, re.IGNORECASE) for p in needs)
+    return found
 
+
+def analyze_text(text: str) -> dict:
+    matched = [rule for rule in RULES if rule_matches(rule, text)]
     score = min(sum(rule["points"] for rule in matched), 100)
 
     if score >= 60:
