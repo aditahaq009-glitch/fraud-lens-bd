@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime, timezone
 from uuid import uuid4
+from analysis import router as analysis_router
 
 # Import your search router
 from search import router as search_router
@@ -22,7 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(analysis_router)
 
 # Temporary development storage
 reports = []
