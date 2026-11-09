@@ -8,47 +8,85 @@ export default function ReportPage() {
   const [submitted, setSubmitted] = useState(false);
   const [reportId, setReportId] = useState("");
   
+
 async function handleSubmit(e) {
   e.preventDefault();
 
   const formData = new FormData(e.currentTarget);
 
-  const payload = {
-    scam_type: formData.get("scam_type"),
-    platform: formData.get("platform"),
-    incident_date: formData.get("incident_date") || null,
-    suspicious_identifier: formData.get("suspicious_identifier") || null,
-    description: formData.get("description"),
-    amount_bdt: formData.get("amount_bdt")
-      ? Number(formData.get("amount_bdt"))
-      : null,
-    evidence_files: files.map((file) => file.name),
-  };
-
   try {
-    const response = await fetch("http://127.0.0.1:8000/reports", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    // Step 1: Upload actual evidence files
+    const uploadedFiles = [];
+
+    for (const file of files) {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+
+      const uploadResponse = await fetch(
+        "http://127.0.0.1:8000/evidence/upload",
+        {
+          method: "POST",
+          body: uploadData,
+        }
+      );
+
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(
+          uploadResult.detail || "Evidence upload failed."
+        );
+      }
+
+      uploadedFiles.push(uploadResult.filename);
+    }
+
+    // Step 2: Prepare report data
+    const payload = {
+      scam_type: formData.get("scam_type"),
+      platform: formData.get("platform"),
+      incident_date: formData.get("incident_date") || null,
+      suspicious_identifier:
+        formData.get("suspicious_identifier") || null,
+      description: formData.get("description"),
+      amount_bdt: formData.get("amount_bdt")
+        ? Number(formData.get("amount_bdt"))
+        : null,
+      evidence_files: uploadedFiles,
+    };
+
+    // Step 3: Save report in PostgreSQL
+    const response = await fetch(
+      "http://127.0.0.1:8000/reports",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(JSON.stringify(data.detail));
+      throw new Error(
+        JSON.stringify(data.detail || "Report submission failed.")
+      );
     }
 
+    // Step 4: Show success
     setSubmitted(true);
     setReportId(data.report.id);
+
     console.log("Report successfully created:", data.report);
 
   } catch (error) {
     console.error("Report submission failed:", error);
-    alert("Could not submit your report. Please try again.");
+    alert(error.message || "Could not submit your report.");
   }
 }
+
 
 
   return (
