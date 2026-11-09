@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from analysis import router as analysis_router
 from search import router as search_router
+from uploads import router as uploads_router
 
 from database import get_db
 from models import ScamReport
@@ -30,6 +31,7 @@ app.add_middleware(
 # Register existing routers
 app.include_router(analysis_router)
 app.include_router(search_router)
+app.include_router(uploads_router)
 
 
 # Health check
