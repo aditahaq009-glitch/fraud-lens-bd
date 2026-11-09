@@ -1,0 +1,139 @@
+FRAUD LENS BD - USE CASE DESCRIPTIONS
+Feature 1: Scam Detection and AI Assistance (owner: Tasmia)
+Diagram: docs/use-case-diagram.png
+
+ACTORS
+User: any person who wants to check a suspicious message.
+Moderator: a User who can review reports. (Not used in Feature 1.)
+AI service (Gemini): external service for reading evidence and writing advice. (Planned. Not in the 10 Nov prototype.)
+
+CURRENT STATUS (6 Nov 2026)
+Working now: text analysis with a rule-based risk score, risk level, scam type, warning signs and next steps.
+Shown as "coming soon": screenshot upload and voice note upload.
+Not built yet: AI analysis, AI action plan, complaint and family warning generator, Bangla audio, analysis history.
+
+
+UC-01: Analyze suspicious text
+Actor: User
+Goal: Find out if a message looks like a scam.
+Precondition: The user opens the Scam Check page. Login is not required in the prototype.
+Main flow:
+1. The user pastes a message (10 to 5000 characters).
+2. The user clicks "Check this message".
+3. The system checks the text against its scam rules.
+4. The system returns a risk score, risk level, scam type, warning signs and next steps.
+5. The page shows the result. (See UC-04.)
+Alternative flows:
+A1. The text is shorter than 10 characters. The system shows an error and asks for more text.
+A2. The text is longer than 5000 characters. The system rejects it.
+A3. The server cannot be reached. The page shows an error that says to check the backend.
+Postcondition: The user sees a result. Nothing is saved yet.
+Status: Done (rule-based prototype).
+
+
+UC-02: Upload screenshot for analysis
+Actor: User, AI service (Gemini)
+Goal: Check a scam message that is only available as a screenshot.
+Precondition: The user has a screenshot (PNG or JPG).
+Main flow:
+1. The user attaches the screenshot.
+2. The system sends it to the AI service to read the text and details.
+3. The system runs the same risk analysis as UC-01 on the extracted text.
+4. The page shows the result. (See UC-04.)
+Alternative flows:
+A1. The file type or size is not allowed. The system shows an error.
+A2. The AI service cannot read the image. The system asks the user to paste the text instead.
+Postcondition: The user sees a result.
+Status: Planned. The page shows a "coming soon" box.
+
+
+UC-03: Upload voice note for analysis
+Actor: User, AI service (Gemini)
+Goal: Check a suspicious voice message or call recording.
+Precondition: The user has an audio file.
+Main flow:
+1. The user attaches the audio file.
+2. The system sends it to the AI service to turn speech into text.
+3. The system runs the same risk analysis as UC-01 on the text.
+4. The page shows the result. (See UC-04.)
+Alternative flows:
+A1. The file type or size is not allowed. The system shows an error.
+A2. The speech is not clear. The system asks the user to type the message.
+Postcondition: The user sees a result.
+Status: Planned. The page shows a "coming soon" box.
+
+
+UC-04: View risk score and explanation
+Actor: User
+Goal: Understand how risky the message is and why.
+Precondition: An analysis has finished (UC-01, UC-02 or UC-03).
+Main flow:
+1. The system shows the score from 0 to 100 and a bar.
+2. The system shows the risk level: Low (0 to 29), Medium (30 to 59) or High (60 to 100).
+3. The system shows the scam type.
+4. The system lists each warning sign and the points it added.
+Postcondition: The user knows why the message got this score.
+Status: Done.
+Note: UC-01, UC-02 and UC-03 all include this use case.
+
+
+UC-05: Get action plan
+Actor: User, AI service (Gemini)
+Goal: Know what to do next after seeing the result.
+Precondition: The result is shown (UC-04).
+Main flow:
+1. The system shows steps for the risk level, for example "Never share your OTP or PIN".
+2. For High risk, the steps include calling the official bKash, Nagad or bank helpline and reporting on Fraud Lens BD.
+Alternative flows:
+A1. Later version: the AI service writes steps that fit the exact message.
+Postcondition: The user knows the next steps.
+Status: Partly done. The prototype shows fixed steps for each risk level. AI steps are planned.
+
+
+UC-06: Generate complaint and family warning
+Actor: User, AI service (Gemini)
+Goal: Get a ready message to report the scam or warn family.
+Precondition: The result is shown (UC-04).
+Main flow:
+1. The user asks for a complaint draft or a family warning.
+2. The AI service writes the message in simple Bangla or English.
+3. The user copies it or sends it (for example on WhatsApp).
+Postcondition: The user has a message ready to send.
+Status: Planned.
+
+
+UC-07: Listen to Bangla audio guidance
+Actor: User, AI service (Gemini)
+Goal: Hear the advice in Bangla, for users who find reading hard.
+Precondition: The result and action plan are shown.
+Main flow:
+1. The user clicks the listen button.
+2. The system turns the action plan into Bangla speech.
+3. The user hears the audio.
+Alternative flows:
+A1. Audio cannot be made. The system keeps the written plan on screen.
+Postcondition: The user has heard the advice.
+Status: Planned (only if time allows).
+
+
+UC-08: View analysis history
+Actor: User
+Goal: Look at past checks.
+Precondition: The user is logged in.
+Main flow:
+1. The user opens the history page.
+2. The system lists past checks with date, score and level.
+3. The user opens one to see the full result.
+Alternative flows:
+A1. There are no past checks. The system shows an empty message.
+Postcondition: The user has seen their past results.
+Status: Planned. It needs login and the database.
+
+
+FEATURE LIMITS (for the docs)
+1. The risk score uses simple keyword and pattern rules. It is not AI yet.
+2. A low score does not prove a message is safe. New scam wording may not match any rule.
+3. The rules cover English and Bangla, but only the words in the rule list.
+4. Results are not saved. There is no history yet.
+5. Screenshot and voice analysis are not built. The page only shows placeholders.
+6. Action steps are fixed text for each risk level.
