@@ -1,18 +1,20 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import Optional
-from datetime import datetime, timezone
-from uuid import uuid4
-from analysis import router as analysis_router
 
-# Import your search router
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+
+from analysis import router as analysis_router
 from search import router as search_router
+
+from database import get_db
+from models import ScamReport
+from schemas import ReportCreate, ReportResponse
 
 
 app = FastAPI(title="Fraud Lens BD API")
 
-# Allow communication with Next.js (both localhost and 127.0.0.1)
+
+# Allow communication with Next.js
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -23,21 +25,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Register existing routers
 app.include_router(analysis_router)
-
-# Temporary development storage
-reports = []
-
-
-# Report data validation
-class ReportCreate(BaseModel):
-    scam_type: str
-    platform: str
-    incident_date: Optional[str] = None
-    suspicious_identifier: Optional[str] = None
-    description: str
-    amount_bdt: Optional[float] = Field(default=None, ge=0)
-    evidence_files: list[str] = []
+app.include_router(search_router)
 
 
 # Health check
@@ -46,33 +38,48 @@ def home():
     return {"message": "Fraud Lens BD Backend is running!"}
 
 
-# Create a scam report
+# Create a scam report in PostgreSQL
 @app.post("/reports", status_code=201)
-def create_report(report: ReportCreate):
+def create_report(
+    report: ReportCreate,
+    db: Session = Depends(get_db)
+):
 
-    new_report = {
-        "id": str(uuid4()),
+    new_report = ScamReport(
         **report.model_dump(),
-        "status": "Unverified",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
+        status="Unverified"
+    )
 
-    reports.append(new_report)
+    db.add(new_report)
+    db.commit()
+    db.refresh(new_report)
+
+    report_data = ReportResponse.model_validate(
+        new_report
+    ).model_dump(mode="json")
 
     return {
         "message": "Report submitted successfully",
-        "report": new_report
+        "report": report_data
     }
 
 
-# Retrieve all scam reports
+# Retrieve all scam reports from PostgreSQL
 @app.get("/reports")
-def get_reports():
+def get_reports(db: Session = Depends(get_db)):
+
+    reports = (
+        db.query(ScamReport)
+        .order_by(ScamReport.created_at.desc())
+        .all()
+    )
+
+    report_data = [
+        ReportResponse.model_validate(report).model_dump(mode="json")
+        for report in reports
+    ]
+
     return {
-        "total": len(reports),
-        "reports": reports
+        "total": len(report_data),
+        "reports": report_data
     }
-
-
-# Register search router
-app.include_router(search_router)
