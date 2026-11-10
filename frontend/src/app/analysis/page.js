@@ -296,7 +296,7 @@ export default function AnalysisPage() {
                   </div>
 
                   <p className="mt-5 font-semibold text-sm">{level.summary}</p>
-                  <p className="text-xs text-[#66766f] leading-6 mt-2">
+                 {/* <p className="text-xs text-[#66766f] leading-6 mt-2">
                     {result.explanation}
                   </p>
 
@@ -305,7 +305,25 @@ export default function AnalysisPage() {
                     <span className="text-sm font-semibold text-right">
                       {result.category}
                     </span>
-                  </div>
+                  </div> */}
+                </div>
+
+                {/* Scam category */}
+                <div className="bg-white border border-[#e0e3dc] p-6 md:p-10">
+                  <p className="text-xs text-[#84918a]">Scam category</p>
+                  <p className="text-2xl font-semibold mt-2">
+                    {result.category}
+                  </p>
+                </div>
+
+                {/* Explanation */}
+                <div className="bg-white border border-[#e0e3dc] p-6 md:p-10">
+                  <h3 className="text-xl font-semibold">
+                    Why we gave this score
+                  </h3>
+                  <p className="text-sm text-[#66766f] leading-7 mt-4">
+                    {result.explanation}
+                  </p>
                 </div>
 
                 {/* Warning signs */}
@@ -334,7 +352,7 @@ export default function AnalysisPage() {
 
                 {/* Next steps */}
                 <div className="bg-[#173b43] text-[#f3f2ec] p-6 md:p-10">
-                  <h3 className="text-xl font-semibold">What to do now</h3>
+                  <h3 className="text-xl font-semibold">Recommended actions</h3>
                   <ul className="mt-5 space-y-4">
                     {result.next_steps.map((step) => (
                       <li
