@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 const LINKS = [
@@ -27,7 +28,7 @@ export default function TopNav({ active }) {
         </div>
       </Link>
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#526761]">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-[#526761]">
         {LINKS.map((link) => (
           <Link
             key={link.href}
@@ -41,6 +42,26 @@ export default function TopNav({ active }) {
             {link.label}
           </Link>
         ))}
+
+        <span className="hidden md:block h-6 border-l border-[#d9ddd5]" />
+
+        <Link
+          href="/login"
+          className={
+            active === "/login"
+              ? "text-[#d76b42] font-semibold"
+              : "hover:text-[#d76b42]"
+          }
+        >
+          Log in
+        </Link>
+
+        <Link
+          href="/signup"
+          className="bg-[#173b43] text-white px-4 py-2 hover:bg-[#24545b] transition-colors"
+        >
+          Sign up
+        </Link>
       </div>
     </nav>
   );
