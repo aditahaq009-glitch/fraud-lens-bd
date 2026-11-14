@@ -1,91 +1,155 @@
 "use client";
 
 import { useState } from "react";
+import TopNav from "../components/TopNav";
+import ResultCard from "../components/ResultCard";
+
+const API_URL = "http://127.0.0.1:8000";
+
+// Quick examples so the demo is fast (these match the demo records)
+const EXAMPLES = ["01700000000", "+8801700000000", "fake-lottery.com"];
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
+  const [searchedFor, setSearchedFor] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [dbWarning, setDbWarning] = useState(false);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  async function runSearch(text) {
+    const term = text.trim();
+    if (!term) return;
 
     setLoading(true);
     setError(null);
+    setDbWarning(false);
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/search?q=${encodeURIComponent(query)}`);
-      
+      const res = await fetch(
+        `${API_URL}/search?q=${encodeURIComponent(term)}`
+      );
+
       if (!res.ok) {
         throw new Error(`Server returned status: ${res.status}`);
       }
 
       const data = await res.json();
       setResults(Array.isArray(data.results) ? data.results : []);
+      setDbWarning(data.database_available === false);
+      setSearchedFor(term);
     } catch (err) {
       console.error("Search error:", err);
       setError("Unable to reach the search server. Please try again later.");
       setResults([]);
+      setSearchedFor("");
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  function handleSearch(e) {
+    e.preventDefault();
+    runSearch(query);
+  }
+
+  function pickExample(example) {
+    setQuery(example);
+    runSearch(example);
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 text-gray-900">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Universal Search Registry</h1>
-          <p className="text-gray-600">Search reported phone numbers, domains, or scam types.</p>
-        </header>
+    <main className="min-h-screen bg-[#f3f2ec] text-[#172b35]">
+      <TopNav active="/search" />
 
-        <form onSubmit={handleSearch} className="flex gap-3">
+      <section className="max-w-4xl mx-auto px-6 md:px-12 pt-14 pb-20">
+        <div className="flex items-center gap-3 mb-5">
+          <span className="w-8 h-[2px] bg-[#d76b42]" />
+          <p className="text-xs font-bold tracking-[3px] text-[#71817d]">
+            UNIVERSAL SEARCH
+          </p>
+        </div>
+
+        <h1 className="text-4xl md:text-6xl font-semibold tracking-[-2px] leading-[1.05]">
+          Check before
+          <span className="text-[#d76b42] italic font-normal"> you pay.</span>
+        </h1>
+        <p className="mt-5 max-w-xl text-[#66766f] leading-7 text-sm">
+          Search a phone number, website, seller or page name, or a scam
+          category. Phone numbers work in any format, like 017-0000 0000 or
+          +8801700000000.
+        </p>
+
+        <form onSubmit={handleSearch} className="flex gap-3 mt-8">
           <input
             type="text"
-            className="flex-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter phone number, domain, or category..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            placeholder="Enter phone number, domain, seller or category..."
+            className="min-w-0 flex-1 bg-white border border-[#dce1da] p-4 text-sm outline-none focus:border-[#d76b42]"
           />
           <button
             type="submit"
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition"
+            disabled={loading || !query.trim()}
+            className="bg-[#173b43] text-white px-7 text-sm font-semibold hover:bg-[#24545b] transition-colors disabled:opacity-50"
           >
             {loading ? "Searching..." : "Search"}
           </button>
         </form>
 
-        {/* Display Error State if connection/server fails */}
+        <div className="flex flex-wrap items-center gap-2 mt-4 text-xs text-[#71817d]">
+          <span>Try an example:</span>
+          {EXAMPLES.map((example) => (
+            <button
+              key={example}
+              type="button"
+              onClick={() => pickExample(example)}
+              className="border border-[#cbd3c9] px-3 py-1 hover:border-[#d76b42] hover:text-[#d76b42]"
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-center">
+          <div className="mt-6 p-4 bg-[#fbeae4] border border-[#efc9bb] text-[#a63d1f] text-sm">
             {error}
           </div>
         )}
 
-        {/* Display Search Results */}
-        <div className="space-y-4">
-          {!error && results.length > 0 && (
-            results.map((item) => (
-              <div key={item.id} className="p-5 bg-white border border-gray-200 rounded-lg shadow-sm space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-lg">{item.query}</span>
-                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
-                    {item.status}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500">Category: {item.category}</p>
-                <p className="text-sm text-gray-700">{item.details}</p>
-              </div>
-            ))
-          )}
+        {dbWarning && !error && (
+          <div className="mt-6 p-4 bg-[#fbf3de] border border-[#efdcae] text-[#8a6212] text-sm">
+            Community reports are temporarily unavailable. Only demo records
+            are shown.
+          </div>
+        )}
 
-          {!error && !loading && results.length === 0 && query.trim() !== "" && (
-            <p className="text-center text-gray-500 py-4">No records found.</p>
-          )}
-        </div>
-      </div>
-    </div>
+        {!error && !loading && searchedFor && (
+          <div className="mt-8 space-y-4">
+            <p className="text-sm font-semibold">
+              {results.length} result{results.length === 1 ? "" : "s"} for
+              “{searchedFor}”
+            </p>
+
+            {results.map((item) => (
+              <ResultCard key={item.id} item={item} />
+            ))}
+
+            {results.length === 0 && (
+              <div className="bg-white border border-[#e0e3dc] p-6 text-sm text-[#66766f] leading-7">
+                No records found. This does not mean it is safe. It only means
+                nobody has reported it here yet. Stay careful, and consider
+                using the Analyze page to check a suspicious message.
+              </div>
+            )}
+          </div>
+        )}
+
+        <p className="mt-10 text-xs text-[#87948b] leading-6">
+          Community reports are submitted by users and are not automatically
+          verified. A report is not proof that someone is a fraudster.
+        </p>
+      </section>
+    </main>
   );
 }
