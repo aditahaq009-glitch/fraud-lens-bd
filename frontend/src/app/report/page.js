@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import TopNav from "../components/TopNav";
 
 export default function ReportPage() {
   const [files, setFiles] = useState([]);
@@ -91,35 +92,10 @@ async function handleSubmit(e) {
 
   return (
     <main className="min-h-screen bg-[#f3f2ec] text-[#172b35]">
-      {/* Top navigation */}
-      <nav className="border-b border-[#d9ddd5] px-6 md:px-12 py-5 flex justify-between items-center">
-        <a href="/" className="flex items-center gap-3">
-          <div className="bg-[#173b43] text-[#e9f0df] w-10 h-10 flex items-center justify-center font-bold text-xl">
-            F.
-          </div>
-          <div>
-            <p className="font-bold tracking-tight text-lg leading-none">
-              FRAUD LENS <span className="text-[#d76b42]">BD</span>
-            </p>
-            <p className="text-[9px] tracking-[3px] mt-1 text-[#71817d]">
-              COMMUNITY INTELLIGENCE
-            </p>
-          </div>
-        </a>
-
-        <div className="hidden md:flex items-center gap-8 text-sm text-[#526761]">
-          <a href="/" className="hover:text-[#d76b42]">Home</a>
-          <a href="/report" className="text-[#d76b42] font-semibold">
-            Report an incident
-          </a>
-          <span className="border border-[#cbd3c9] px-4 py-2 text-xs">
-            BANGLADESH / BD
-          </span>
-        </div>
-      </nav>
+      <TopNav active="/report" />
 
       {/* Page introduction */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 pt-14 pb-9">
+      <section className="max-w-5xl mx-auto px-6 md:px-12 pt-14 pb-9">
         <div className="flex items-center gap-3 mb-5">
           <span className="w-8 h-[2px] bg-[#d76b42]" />
           <p className="text-xs font-bold tracking-[3px] text-[#71817d]">
@@ -155,7 +131,7 @@ async function handleSubmit(e) {
       </section>
 
       {/* Main form area */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 pb-20">
+      <section className="max-w-5xl mx-auto px-6 md:px-12 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_0.8fr] gap-6">
 
           {/* Report form */}
