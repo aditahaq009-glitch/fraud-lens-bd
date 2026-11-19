@@ -2,17 +2,58 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TopNav from "../components/TopNav";
 
-export default function LoginPage() {
-  const [message, setMessage] = useState("");
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  function handleSubmit(e) {
+export default function LoginPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    setMessage(
-      "Login preview complete! Account authentication will be available in the full release."
-    );
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Login failed. Please try again."
+        );
+        return;
+      }
+
+      sessionStorage.setItem("access_token", data.access_token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+
+      router.push("/");
+    } catch {
+      setMessage("Unable to connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -41,6 +82,9 @@ export default function LoginPage() {
               id="email"
               type="email"
               required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               className="w-full bg-white border border-[#d9ddd5] rounded-md px-4 py-3 outline-none focus:border-[#17434a] focus:ring-1 focus:ring-[#17434a]"
             />
@@ -54,6 +98,10 @@ export default function LoginPage() {
               id="password"
               type="password"
               required
+              maxLength={128}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="w-full bg-white border border-[#d9ddd5] rounded-md px-4 py-3 outline-none focus:border-[#17434a] focus:ring-1 focus:ring-[#17434a]"
             />
@@ -61,21 +109,19 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-[#17434a] text-white py-3 rounded-md font-semibold hover:bg-[#24575c] transition-colors"
+            disabled={loading}
+            className="w-full bg-[#17434a] text-white py-3 rounded-md font-semibold hover:bg-[#24575c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log in
+            {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
 
         {message && (
           <div
-            role="status"
-            className="mt-6 border-l-4 border-[#bd6949] bg-[#f2f0e9] p-4"
+            role="alert"
+            className="mt-6 border-l-4 border-red-500 bg-red-50 p-4"
           >
-            <p className="text-sm font-semibold text-[#263d39] mb-1">
-              Login preview
-            </p>
-            <p className="text-sm text-[#526761] leading-6">
+            <p className="text-sm text-red-700 leading-6">
               {message}
             </p>
           </div>
@@ -86,10 +132,6 @@ export default function LoginPage() {
           <Link href="/signup" className="font-semibold text-[#bd6949] hover:underline">
             Create one
           </Link>
-        </p>
-
-        <p className="mt-8 text-xs text-[#68776f]">
-          Demo environment · Authentication is not connected yet.
         </p>
       </section>
     </main>
