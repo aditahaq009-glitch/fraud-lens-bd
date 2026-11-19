@@ -2,7 +2,10 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, String, Text, Float, DateTime, JSON
+from sqlalchemy import (
+    Column, String, Text, Float, DateTime, JSON,
+    ForeignKey, UniqueConstraint
+)
 from sqlalchemy.dialects.postgresql import UUID
 
 from database import Base
@@ -13,6 +16,11 @@ class ScamReport(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
+    user_id = Column(
+    UUID(as_uuid=True),
+    ForeignKey("users.id"),
+    nullable=True
+)
     scam_type = Column(String(100), nullable=False)
     platform = Column(String(100), nullable=False)
 
@@ -30,4 +38,38 @@ class ScamReport(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
+    )
+
+
+class VerificationVote(Base):
+    __tablename__ = "verification_votes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    report_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("scam_reports.id"),
+        nullable=False
+    )
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    vote_type = Column(String(20), nullable=False)
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "report_id",
+            "user_id",
+            name="unique_user_report_vote"
+        ),
     )

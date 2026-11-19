@@ -3,7 +3,16 @@ from pathlib import Path
 from uuid import uuid4
 import os
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    File,
+    HTTPException,
+    UploadFile,
+    Depends,
+)
+
+from auth import get_current_user
+from auth_models import User
 
 router = APIRouter(prefix="/evidence", tags=["Evidence"])
 
@@ -26,7 +35,10 @@ FILE_SIGNATURES = {
 
 
 @router.post("/upload")
-async def upload_evidence(file: UploadFile = File(...)):
+async def upload_evidence(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,

@@ -1,4 +1,8 @@
 
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const LINKS = [
@@ -8,10 +12,38 @@ const LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/product-report", label: "Product vs Reality" },
   { href: "/report", label: "Report" },
+  { href: "/community", label: "Community" },
   { href: "/analysis", label: "Analyze" },
 ];
 
 export default function TopNav({ active }) {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("access_token");
+    const storedUser = sessionStorage.getItem("user");
+
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        sessionStorage.removeItem("access_token");
+        sessionStorage.removeItem("user");
+      }
+    }
+
+    setChecked(true);
+  }, []);
+
+  function handleLogout() {
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("user");
+    setUser(null);
+    router.push("/");
+  }
+
   return (
     <nav className="border-b border-[#d9ddd5] px-6 md:px-12 py-5 flex flex-wrap justify-between items-center gap-4">
       <Link href="/" className="flex items-center gap-3">
@@ -43,25 +75,46 @@ export default function TopNav({ active }) {
           </Link>
         ))}
 
-        <span className="hidden md:block h-6 border-l border-[#d9ddd5]" />
+        {checked && (
+          <>
+            <span className="hidden md:block h-6 border-l border-[#d9ddd5]" />
 
-        <Link
-          href="/login"
-          className={
-            active === "/login"
-              ? "text-[#d76b42] font-semibold"
-              : "hover:text-[#d76b42]"
-          }
-        >
-          Log in
-        </Link>
+            {user ? (
+              <>
+                <span className="font-semibold text-[#173b43]">
+                  Hi, {user.full_name}
+                </span>
 
-        <Link
-          href="/signup"
-          className="bg-[#173b43] text-white px-4 py-2 hover:bg-[#24545b] transition-colors"
-        >
-          Sign up
-        </Link>
+                <button
+                  onClick={handleLogout}
+                  className="bg-[#173b43] text-white px-4 py-2 hover:bg-[#24545b] transition-colors"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className={
+                    active === "/login"
+                      ? "text-[#d76b42] font-semibold"
+                      : "hover:text-[#d76b42]"
+                  }
+                >
+                  Log in
+                </Link>
+
+                <Link
+                  href="/signup"
+                  className="bg-[#173b43] text-white px-4 py-2 hover:bg-[#24545b] transition-colors"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+          </>
+        )}
       </div>
     </nav>
   );

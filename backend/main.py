@@ -7,10 +7,12 @@ from analysis import router as analysis_router
 from search import router as search_router
 from uploads import router as uploads_router
 
-from database import get_db
+from database import get_db, Base, engine
 from models import ScamReport
+from auth import router as auth_router, get_current_user
+from auth_models import User
 from schemas import ReportCreate, ReportResponse
-
+from verification import router as verification_router
 
 app = FastAPI(title="Fraud Lens BD API")
 
@@ -32,6 +34,12 @@ app.add_middleware(
 app.include_router(analysis_router)
 app.include_router(search_router)
 app.include_router(uploads_router)
+app.include_router(auth_router)
+app.include_router(verification_router)
+# Create database tables
+@app.on_event("startup")
+def create_tables():
+    Base.metadata.create_all(bind=engine)
 
 
 # Health check
@@ -44,12 +52,14 @@ def home():
 @app.post("/reports", status_code=201)
 def create_report(
     report: ReportCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     new_report = ScamReport(
-        **report.model_dump(),
-        status="Unverified"
+    **report.model_dump(),
+    user_id=current_user.id,
+    status="Unverified"
     )
 
     db.add(new_report)

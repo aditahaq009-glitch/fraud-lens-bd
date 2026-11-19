@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import TopNav from "../components/TopNav";
+import AuthGuard from "../components/AuthGuard";
 
 export default function ReportPage() {
   const [files, setFiles] = useState([]);
@@ -11,6 +12,7 @@ export default function ReportPage() {
   
 
 async function handleSubmit(e) {
+  const token = sessionStorage.getItem("access_token");
   e.preventDefault();
 
   const formData = new FormData(e.currentTarget);
@@ -24,12 +26,15 @@ async function handleSubmit(e) {
       uploadData.append("file", file);
 
       const uploadResponse = await fetch(
-        "http://127.0.0.1:8000/evidence/upload",
-        {
-          method: "POST",
-          body: uploadData,
-        }
-      );
+  "http://127.0.0.1:8000/evidence/upload",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: uploadData,
+  }
+);
 
       const uploadResult = await uploadResponse.json();
 
@@ -63,6 +68,7 @@ async function handleSubmit(e) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       }
@@ -91,7 +97,9 @@ async function handleSubmit(e) {
 
 
   return (
-    <main className="min-h-screen bg-[#f3f2ec] text-[#172b35]">
+
+    <AuthGuard>
+     <main className="min-h-screen bg-[#f3f2ec] text-[#172b35]">
       <TopNav active="/report" />
 
       {/* Page introduction */}
@@ -415,5 +423,6 @@ async function handleSubmit(e) {
         </div>
       </section>
     </main>
+    </AuthGuard>
   );
 }

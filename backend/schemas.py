@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
-
+from typing import Literal
 
 class ReportCreate(BaseModel):
     scam_type: str = Field(..., min_length=1, max_length=100)
@@ -30,3 +30,23 @@ class ReportResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class VoteCreate(BaseModel):
+    vote_type: Literal["credible", "suspicious"]
+
+
+class VoteResponse(BaseModel):
+    id: UUID
+    report_id: UUID
+    user_id: UUID
+    vote_type: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VoteSummary(BaseModel):
+    report_id: UUID
+    credible_votes: int
+    suspicious_votes: int
+    total_votes: int
